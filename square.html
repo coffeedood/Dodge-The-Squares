@@ -27,6 +27,8 @@
     });
 
     var rect1 = state;
+    var gameover = false
+
     enemylist.forEach(function (enemy) {
       var rect2 = enemy;
       if (
@@ -35,9 +37,13 @@
         rect1.y < rect2.y + rect2.height &&
         rect1.height + rect1.y > rect2.y
       ) {
-        alert("GAME OVER");
+       gameover=true;
       }
+
     });
+    if(gameover) {
+      alert("GAME OVER");
+    }
   }
   function loop() {
     ctx.clearRect(0, 0, c.width, c.height);
