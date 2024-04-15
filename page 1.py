@@ -2,140 +2,159 @@ import sqlite3
 import tkinter as tk
 from tkinter import messagebox
 
-class ContactManager:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title('Contact and Task Management')
+def create_table():
+    connection = sqlite3.connect('letter.db')
+    cursor = connection.cursor()
 
-        # Initialize checkbox variables
-        self.care_for_children_var = tk.BooleanVar()
-        self.care_for_others_var = tk.BooleanVar()
-        self.care_for_animals_var = tk.BooleanVar()
-        self.contact_employer_var = tk.BooleanVar()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            bio TEXT NOT NULL,
+            health_directive TEXT,
+            power_of_attorney TEXT,
+            care_for_children TEXT,
+            care_for_others TEXT,
+            care_for_animals TEXT,
+            contact_employer TEXT
+        )''')
 
-        self.create_contact_table()
-        self.create_task_table()
+    connection.commit()
+    connection.close()
+    print("Table created successfully")
 
-        self.setup_gui()
+def update_table():
+    connection = sqlite3.connect('letter.db')
+    cursor = connection.cursor()
 
-        self.root.mainloop()
+    cursor.execute("PRAGMA table_info(contacts)")
+    columns = [column[1] for column in cursor.fetchall()]
+    
+    if 'care_for_children' not in columns:
+        cursor.execute('''ALTER TABLE contacts
+                          ADD COLUMN care_for_children TEXT''')
+    if 'care_for_others' not in columns:
+        cursor.execute('''ALTER TABLE contacts
+                          ADD COLUMN care_for_others TEXT''')
+    if 'care_for_animals' not in columns:
+        cursor.execute('''ALTER TABLE contacts
+                          ADD COLUMN care_for_animals TEXT''')
+    if 'contact_employer' not in columns:
+        cursor.execute('''ALTER TABLE contacts
+                          ADD COLUMN contact_employer TEXT''')
 
-    def create_contact_table(self):
-        connection = sqlite3.connect('contacts.db')
-        cursor = connection.cursor()
+    connection.commit()
+    connection.close()
+    print("Table updated successfully")
 
-        cursor.execute('''DROP TABLE IF EXISTS contacts''')
+def insert_contact(name, bio, health_directive, power_of_attorney, care_for_children, care_for_others, care_for_animals, contact_employer):
+    connection = sqlite3.connect('letter.db')
+    cursor = connection.cursor()
 
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS contacts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                bio TEXT NOT NULL
-            )
-        ''')
+    cursor.execute('''
+        INSERT INTO contacts (name, bio, health_directive, power_of_attorney, care_for_children, care_for_others, care_for_animals, contact_employer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (name, bio, health_directive, power_of_attorney, care_for_children, care_for_others, care_for_animals, contact_employer))
 
-        connection.commit()
-        connection.close()
-        print("Contact table created successfully")
+    connection.commit()
+    connection.close()
 
-    def create_task_table(self):
-        connection = sqlite3.connect('tasks.db')
-        cursor = connection.cursor()
+def retrieve_contacts():
+    connection = sqlite3.connect('letter.db')
+    cursor = connection.cursor()
 
-        cursor.execute('''DROP TABLE IF EXISTS tasks''')
+    cursor.execute('SELECT * FROM contacts')
+    contacts = cursor.fetchall()
 
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                care_for_children TEXT NOT NULL,
-                care_for_others TEXT NOT NULL,
-                care_for_animals TEXT NOT NULL,
-                contact_employer TEXT NOT NULL
-            )
-        ''')
+    connection.close()
+    return contacts
 
-        connection.commit()
-        connection.close()
-        print("Task table created successfully")
+def print_contacts():
+    contacts = retrieve_contacts()
+    if contacts:
+        for contact in contacts:
+            print(contact)
+    else:
+        print('No contacts available.')
 
-    def insert_contact(self, name, bio):
-        connection = sqlite3.connect('contacts.db')
-        cursor = connection.cursor()
+def ask_health_directive():
+    answer = messagebox.askquestion("Health Care Directives Applicable", "Review Health Care Directives Applicable: Yes or No")
+    return answer
 
-        cursor.execute('''
-            INSERT INTO contacts (name, bio) VALUES (?, ?)
-        ''', (name, bio))
+def ask_power_of_attorney():
+    answer = messagebox.askquestion("Power of Attorney for Finances Applicable", "Review Power of Attorney for Finances Applicable: Yes or No")
+    return answer
 
-        connection.commit()
-        connection.close()
+def ask_care_for_children():
+    answer = messagebox.askquestion("Care for Children Applicable", "Care for Children Applicable: Yes or No")
+    return answer
 
-    def insert_tasks(self, care_for_children, care_for_others, care_for_animals, contact_employer):
-        connection = sqlite3.connect('tasks.db')
-        cursor = connection.cursor()
+def ask_care_for_others():
+    answer = messagebox.askquestion("Care for Others Applicable", "Care for Others Applicable: Yes or No")
+    return answer
 
-        cursor.execute('''
-            INSERT INTO tasks (care_for_children, care_for_others, care_for_animals, contact_employer)
-            VALUES (?, ?, ?, ?)
-        ''', (care_for_children, care_for_others, care_for_animals, contact_employer))
+def ask_care_for_animals():
+    answer = messagebox.askquestion("Care for Animals Applicable", "Care for Animals Applicable: Yes or No")
+    return answer
 
-        connection.commit()
-        connection.close()
+def ask_contact_employer():
+    answer = messagebox.askquestion("Contact Employer Applicable", "Contact Employer Applicable: Yes or No")
+    return answer
 
-    def setup_gui(self):
-        tk.Label(self.root, text='Enter Name:').pack()
-        self.name_entry = tk.Entry(self.root)
-        self.name_entry.pack()
+def get_text():
+    # Show the pop-up box
+    messagebox.showinfo("WEEK 1", "Welcome to Week 1!")
+    
+    # Open the text entry window
+    text_window = tk.Toplevel(root)
+    text_window.title('Enter Text')
+    
+    tk.Label(text_window, text='Enter Text:').grid(row=0, column=0)
+    text_entry = tk.Text(text_window, height=4, width=30)
+    text_entry.grid(row=0, column=1)
+    
+    submit_button = tk.Button(text_window, text='Submit', command=lambda: save_text(text_entry))
+    submit_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-        tk.Label(self.root, text='Enter Bio:').pack()
-        self.bio_entry = tk.Text(self.root, height=4, width=30)
-        self.bio_entry.pack()
+def save_text(text_entry):
+    text = text_entry.get("1.0", "end-1c").strip()
+    name_window = tk.Toplevel(root)
+    name_window.title('Enter Name')
+    
+    tk.Label(name_window, text='Enter Name:').grid(row=0, column=0)
+    name_entry = tk.Entry(name_window)
+    name_entry.grid(row=0, column=1)
+    
+    submit_button = tk.Button(name_window, text='Submit', command=lambda: save_name(name_entry.get(), text, name_window))
+    submit_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-        tk.Checkbutton(self.root, text='Care for Children', variable=self.care_for_children_var).pack()
-        tk.Checkbutton(self.root, text='Care for Others', variable=self.care_for_others_var).pack()
-        tk.Checkbutton(self.root, text='Care for Animals', variable=self.care_for_animals_var).pack()
-        tk.Checkbutton(self.root, text='Contact Employer', variable=self.contact_employer_var).pack()
+def save_name(name, bio, name_window):
+    health_directive = ask_health_directive()
+    power_of_attorney = ask_power_of_attorney()
+    care_for_children = ask_care_for_children()
+    care_for_others = ask_care_for_others()
+    care_for_animals = ask_care_for_animals()
+    contact_employer = ask_contact_employer()
+    
+    insert_contact(name, bio, health_directive, power_of_attorney, care_for_children, care_for_others, care_for_animals, contact_employer)
+    messagebox.showinfo('Success', 'Information saved successfully!')
+    name_window.destroy()
 
-        tk.Button(self.root, text='Save', command=self.save_data).pack(pady=10)
-        tk.Button(self.root, text='Print', command=self.print_data).pack(pady=10)
+# GUI setup
+root = tk.Tk()
+root.title('Contact Management')
 
-    def save_data(self):
-        name = self.name_entry.get()
-        bio = self.bio_entry.get("1.0", "end-1c").strip()
+# Create table if not exists
+create_table()
 
-        self.insert_contact(name, bio)
-        self.insert_tasks(self.care_for_children_var.get(), self.care_for_others_var.get(),
-                          self.care_for_animals_var.get(), self.contact_employer_var.get())
-        messagebox.showinfo('Success', 'Contact and Tasks saved successfully!')
+# Update table structure if necessary
+update_table()
 
-    def print_data(self):
-        connection = sqlite3.connect('contacts.db')
-        cursor = connection.cursor()
+# Button to enter text
+text_button = tk.Button(root, text='Enter Text', command=get_text)
+text_button.pack(pady=10)
 
-        cursor.execute('SELECT * FROM contacts')
-        contacts = cursor.fetchall()
+# Button to print contacts
+print_button = tk.Button(root, text='Print Contacts', command=print_contacts)
+print_button.pack(pady=10)
 
-        connection.close()
-
-        if contacts:
-            print("Contacts:")
-            for contact in contacts:
-                print(contact)
-        else:
-            print('No contacts available.')
-
-        connection = sqlite3.connect('tasks.db')
-        cursor = connection.cursor()
-
-        cursor.execute('SELECT * FROM tasks')
-        tasks = cursor.fetchall()
-
-        connection.close()
-
-        if tasks:
-            print("Tasks:")
-            for task in tasks:
-                print(task)
-        else:
-            print('No tasks available.')
-
-ContactManager()
+# Start the GUI main loop
+root.mainloop()
